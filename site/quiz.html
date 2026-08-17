@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Quiz Matrimonio - Luca & Elisa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --cream: #FDF6F0;
+            --white: #FFFFFF;
+            --gold: #C9916E;
+            --gold-light: #E8C9A8;
+            --rose: #D4849F;
+            --rose-light: #F0C6D4;
+            --charcoal: #2D2D2D;
+            --gray: #7A7A7A;
+            --sage: #A8C5A0;
+            --sage-dark: #7BA872;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            min-height: 100dvh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
+            padding: 24px;
+            animation: fadeIn 0.5s ease;
+        }
+        .screen.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(40px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            15% { transform: scale(1.15); }
+            30% { transform: scale(1); }
+            45% { transform: scale(1.1); }
+        }
+
+        /* === WELCOME SCREEN === */
+        .flourish {
+            font-size: 48px;
+            color: var(--gold);
+            margin-bottom: 8px;
+            animation: float 3s ease-in-out infinite;
+        }
+        .couple-names {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            font-weight: 700;
+            color: var(--charcoal);
+            margin-bottom: 4px;
+        }
+        .ampersand {
+            font-style: italic;
+            color: var(--rose);
+            margin: 0 4px;
+        }
+        .subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: var(--gray);
+            margin-bottom: 32px;
+            font-style: italic;
+        }
+        .tagline {
+            font-size: 15px;
+            color: var(--gray);
+            margin-bottom: 40px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .hearts {
+            font-size: 32px;
+            margin-bottom: 24px;
+            animation: heartbeat 2s ease-in-out infinite;
+        }
+
+        /* === BUTTONS === */
+        .btn {
+            background: linear-gradient(135deg, var(--rose), var(--gold));
+            color: white;
+            border: none;
+            padding: 16px 48px;
+            font-family: 'Lato', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(201, 145, 110, 0.3);
+            letter-spacing: 0.5px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(201, 145, 110, 0.4);
+        }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* === NAME SCREEN === */
+        .name-label {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            margin-bottom: 24px;
+            color: var(--charcoal);
+        }
+        .name-input {
+            width: 100%;
+            max-width: 320px;
+            padding: 16px 20px;
+            font-family: 'Lato', sans-serif;
+            font-size: 18px;
+            border: 2px solid var(--gold-light);
+            border-radius: 12px;
+            background: var(--white);
+            color: var(--charcoal);
+            text-align: center;
+            outline: none;
+            transition: border-color 0.3s;
+            margin-bottom: 32px;
+        }
+        .name-input:focus { border-color: var(--gold); }
+        .name-input::placeholder { color: #ccc; }
+        .name-hint {
+            font-size: 13px;
+            color: var(--gray);
+            margin-top: -20px;
+            margin-bottom: 20px;
+        }
+
+        /* === QUESTION SCREEN === */
+        .quiz-container {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100dvh;
+            padding: 20px 16px;
+        }
+
+        .progress-wrap {
+            width: 100%;
+            margin-bottom: 24px;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .progress-label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: var(--gold-light);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--rose), var(--gold));
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+
+        .question-card {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 28px 24px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+            animation: slideUp 0.4s ease;
+        }
+        .question-number {
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--rose);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 12px;
+        }
+        .question-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            line-height: 1.4;
+            color: var(--charcoal);
+        }
+
+        .options {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 16px 18px;
+            background: var(--white);
+            border: 2px solid #E8E0D8;
+            border-radius: 14px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            text-align: left;
+            font-family: 'Lato', sans-serif;
+            font-size: 16px;
+            color: var(--charcoal);
+            line-height: 1.4;
+        }
+        .option-btn:hover {
+            border-color: var(--gold);
+            background: #FFF9F5;
+        }
+        .option-btn:active {
+            transform: scale(0.98);
+        }
+        .option-btn.selected {
+            border-color: var(--sage-dark);
+            background: #F0F7EE;
+            animation: pulse 0.3s ease;
+        }
+        .option-btn.disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .option-letter {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--cream);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--gold);
+            transition: all 0.25s;
+        }
+        .option-btn.selected .option-letter {
+            background: var(--sage-dark);
+            color: white;
+        }
+
+        /* === LOADING SCREEN === */
+        .loading-screen {
+            text-align: center;
+        }
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid var(--gold-light);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 24px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text {
+            font-size: 16px;
+            color: var(--gray);
+        }
+
+        /* === COMPLETE SCREEN === */
+        .complete-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            animation: float 2s ease-in-out infinite;
+        }
+        .complete-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .complete-msg {
+            font-size: 16px;
+            color: var(--gray);
+            text-align: center;
+            line-height: 1.6;
+            max-width: 300px;
+            margin-bottom: 32px;
+        }
+        .complete-emoji {
+            font-size: 40px;
+            animation: heartbeat 2s ease-in-out infinite;
+        }
+
+        /* === ERROR === */
+        .error-box {
+            background: #FFF0F0;
+            border: 1px solid #E8A0A0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 14px;
+            color: #8B3A3A;
+            text-align: center;
+            max-width: 400px;
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="screen-loading" class="screen active loading-screen">
+    <div class="spinner"></div>
+    <div class="loading-text">Caricamento del quiz...</div>
+</div>
+
+<!-- WELCOME -->
+<div id="screen-welcome" class="screen">
+    <div class="flourish">&#10053;</div>
+    <div class="couple-names">Luca <span class="ampersand">&</span> Elisa</div>
+    <div class="subtitle">Il Quiz del Matrimonio</div>
+    <div class="hearts">&#x1F490;</div>
+    <div class="tagline">
+        Rispondi alle domande e scopri<br>
+        quanto conosci gli sposi!<br><br>
+        Poi toccherà a loro indovinare<br>
+        cosa avete risposto...
+    </div>
+    <button class="btn" onclick="showScreen('screen-name')">Inizia il Quiz!</button>
+</div>
+
+<!-- NAME -->
+<div id="screen-name" class="screen">
+    <div class="name-label">Come ti chiami?</div>
+    <input type="text" id="guest-name" class="name-input" placeholder="Il tuo nome" maxlength="40"
+           onkeydown="if(event.key==='Enter') startQuiz()">
+    <p class="name-hint">Il tuo nome apparirà nei risultati</p>
+    <button class="btn" id="btn-start" onclick="startQuiz()" disabled>Avanti</button>
+</div>
+
+<!-- QUIZ -->
+<div id="screen-quiz" class="screen" style="justify-content: flex-start;">
+    <div class="quiz-container">
+        <div class="progress-wrap">
+            <div class="progress-header">
+                <span class="progress-label" id="progress-text">Domanda 1 di ?</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+        </div>
+        <div class="question-card" id="question-card">
+            <div class="question-number" id="question-number">DOMANDA 1</div>
+            <div class="question-text" id="question-text"></div>
+        </div>
+        <div class="options" id="options-container"></div>
+    </div>
+</div>
+
+<!-- SUBMITTING -->
+<div id="screen-submitting" class="screen">
+    <div class="spinner"></div>
+    <div class="loading-text">Invio risposte in corso...</div>
+</div>
+
+<!-- COMPLETE -->
+<div id="screen-complete" class="screen">
+    <div class="complete-icon">&#127881;</div>
+    <div class="complete-title">Grazie <span id="thank-name"></span>!</div>
+    <div class="complete-msg">
+        Le tue risposte sono state inviate!<br><br>
+        Ora tocca a Luca & Elisa indovinare<br>
+        cosa avete risposto...
+    </div>
+    <div class="complete-emoji">&#128536;</div>
+</div>
+
+<!-- ERROR -->
+<div id="screen-error" class="screen">
+    <div style="font-size:48px; margin-bottom:16px;">&#128533;</div>
+    <div class="name-label">Oops!</div>
+    <div class="error-box" id="error-message">Errore nel caricamento del quiz.</div>
+    <button class="btn" onclick="location.reload()" style="margin-top:24px;">Riprova</button>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURAZIONE
+// ============================================================
+const SHEET_ID = '1s13k4b13tXePUyL3BZiiIx1U5aRmx-VQkigbcjNHmIU';
+
+// Dopo aver pubblicato il Google Apps Script come Web App,
+// incolla qui l'URL (vedi istruzioni nel file setup.md):
+const APPS_SCRIPT_URL = '';
+// ============================================================
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+let questions = [];
+let currentQ = 0;
+let answers = [];
+let guestName = '';
+
+// Enable start button when name is typed
+document.getElementById('guest-name').addEventListener('input', (e) => {
+    document.getElementById('btn-start').disabled = e.target.value.trim().length === 0;
+});
+
+// Screen management
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const screen = document.getElementById(id);
+    screen.classList.remove('active');
+    // Force reflow for animation
+    void screen.offsetWidth;
+    screen.classList.add('active');
+}
+
+// Fetch questions from Google Sheet
+async function loadQuestions() {
+    try {
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+        const res = await fetch(url);
+        const text = await res.text();
+
+        // Parse gviz JSONP response
+        const startIdx = text.indexOf('(') + 1;
+        const endIdx = text.lastIndexOf(')');
+        const data = JSON.parse(text.substring(startIdx, endIdx));
+
+        const rows = data.table.rows;
+        questions = [];
+
+        for (const row of rows) {
+            const cells = row.c;
+            if (!cells || !cells[0] || !cells[0].v) continue;
+
+            const q = {
+                text: String(cells[0].v).trim(),
+                options: []
+            };
+
+            for (let i = 1; i <= 4; i++) {
+                if (cells[i] && cells[i].v != null) {
+                    q.options.push(String(cells[i].v).trim());
+                }
+            }
+
+            // Only add questions with at least 2 options
+            if (q.options.length >= 2) {
+                questions.push(q);
+            }
+        }
+
+        if (questions.length === 0) {
+            throw new Error('Nessuna domanda trovata nel foglio.');
+        }
+
+        showScreen('screen-welcome');
+    } catch (err) {
+        console.error('Error loading questions:', err);
+        document.getElementById('error-message').textContent =
+            'Impossibile caricare le domande. Verifica che il foglio Google sia condiviso con "Chiunque abbia il link".';
+        showScreen('screen-error');
+    }
+}
+
+function startQuiz() {
+    guestName = document.getElementById('guest-name').value.trim();
+    if (!guestName) return;
+    currentQ = 0;
+    answers = [];
+    showQuestion();
+}
+
+function showQuestion() {
+    showScreen('screen-quiz');
+
+    const q = questions[currentQ];
+    const total = questions.length;
+
+    document.getElementById('progress-text').textContent = `Domanda ${currentQ + 1} di ${total}`;
+    document.getElementById('progress-fill').style.width = `${((currentQ) / total) * 100}%`;
+
+    // Animate question card
+    const card = document.getElementById('question-card');
+    card.style.animation = 'none';
+    void card.offsetWidth;
+    card.style.animation = 'slideUp 0.4s ease';
+
+    document.getElementById('question-number').textContent = `DOMANDA ${currentQ + 1}`;
+    document.getElementById('question-text').textContent = q.text;
+
+    const container = document.getElementById('options-container');
+    container.innerHTML = '';
+
+    q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.innerHTML = `
+            <span class="option-letter">${LETTERS[idx]}</span>
+            <span>${opt}</span>
+        `;
+        btn.style.animation = `slideUp 0.4s ease ${idx * 0.08}s both`;
+        btn.addEventListener('click', () => selectOption(idx, btn));
+        container.appendChild(btn);
+    });
+}
+
+function selectOption(idx, btnEl) {
+    // Disable all options
+    document.querySelectorAll('.option-btn').forEach(b => {
+        b.classList.add('disabled');
+    });
+    btnEl.classList.add('selected');
+
+    answers.push({
+        question: currentQ,
+        answer: LETTERS[idx]
+    });
+
+    // Advance after brief delay
+    setTimeout(() => {
+        currentQ++;
+        if (currentQ < questions.length) {
+            showQuestion();
+        } else {
+            // Update progress to 100%
+            document.getElementById('progress-fill').style.width = '100%';
+            submitAnswers();
+        }
+    }, 600);
+}
+
+async function submitAnswers() {
+    showScreen('screen-submitting');
+
+    const payload = {
+        name: guestName,
+        timestamp: new Date().toISOString(),
+        answers: answers.map(a => a.answer)
+    };
+
+    if (APPS_SCRIPT_URL) {
+        try {
+            await fetch(APPS_SCRIPT_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+        } catch (err) {
+            console.warn('Submit error (may still have worked with no-cors):', err);
+        }
+    } else {
+        console.log('APPS_SCRIPT_URL not configured. Answers:', payload);
+    }
+
+    showComplete();
+}
+
+function showComplete() {
+    document.getElementById('thank-name').textContent = guestName;
+    showScreen('screen-complete');
+
+    // Confetti burst!
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 3,
+            angle: 60,
+            spread: 55,
+            origin: { x: 0, y: 0.7 },
+            colors: ['#D4849F', '#C9916E', '#A8C5A0', '#E8C9A8', '#F0C6D4']
+        });
+        confetti({
+            particleCount: 3,
+            angle: 120,
+            spread: 55,
+            origin: { x: 1, y: 0.7 },
+            colors: ['#D4849F', '#C9916E', '#A8C5A0', '#E8C9A8', '#F0C6D4']
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+}
+
+// Start!
+loadQuestions();
+</script>
+
+</body>
+</html>

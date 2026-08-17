@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Il Gioco degli Sposi - Luca & Elisa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --cream: #FDF6F0;
+            --white: #FFFFFF;
+            --gold: #C9916E;
+            --gold-light: #E8C9A8;
+            --rose: #D4849F;
+            --rose-light: #F0C6D4;
+            --charcoal: #2D2D2D;
+            --gray: #7A7A7A;
+            --sage: #A8C5A0;
+            --sage-dark: #7BA872;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px;
+            animation: fadeIn 0.6s ease;
+        }
+        .screen.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes growBar {
+            from { width: 0; }
+        }
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* === WELCOME === */
+        .welcome-flourish { font-size: 64px; color: var(--gold); margin-bottom: 16px; }
+        .welcome-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .welcome-amp { color: var(--rose); font-style: italic; }
+        .welcome-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: var(--gray);
+            font-style: italic;
+            margin-bottom: 16px;
+        }
+        .welcome-info {
+            font-size: 18px;
+            color: var(--gray);
+            margin-bottom: 40px;
+            text-align: center;
+            line-height: 1.6;
+        }
+        .welcome-stats {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .stat-box {
+            text-align: center;
+        }
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--rose), var(--gold));
+            color: white;
+            border: none;
+            padding: 18px 56px;
+            font-family: 'Lato', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(201,145,110,0.3);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(201,145,110,0.4);
+        }
+        .btn.secondary {
+            background: var(--white);
+            color: var(--gold);
+            border: 2px solid var(--gold);
+            box-shadow: none;
+        }
+
+        /* === GAME SCREEN === */
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 32px;
+        }
+        .game-progress {
+            font-size: 16px;
+            color: var(--gray);
+        }
+        .game-score {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: var(--gold);
+        }
+        .score-icon { font-size: 32px; }
+
+        .game-question-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+            margin-bottom: 32px;
+            animation: fadeIn 0.5s ease;
+        }
+        .game-q-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--rose);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+        .game-q-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 32px;
+            line-height: 1.4;
+        }
+
+        /* === GUESS PHASE === */
+        .guess-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .guess-btn {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 20px 24px;
+            background: var(--white);
+            border: 3px solid #E8E0D8;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Lato', sans-serif;
+            font-size: 18px;
+            color: var(--charcoal);
+            text-align: left;
+            line-height: 1.4;
+        }
+        .guess-btn:hover {
+            border-color: var(--gold);
+            background: #FFF9F5;
+            transform: translateY(-2px);
+        }
+        .guess-btn.selected {
+            border-color: var(--rose);
+            background: var(--rose-light);
+        }
+        .guess-btn.correct {
+            border-color: var(--sage-dark);
+            background: #E8F5E4;
+        }
+        .guess-btn.wrong {
+            border-color: #ccc;
+            opacity: 0.5;
+        }
+        .guess-btn .letter {
+            flex-shrink: 0;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: var(--cream);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--gold);
+        }
+        .guess-btn.selected .letter {
+            background: var(--rose);
+            color: white;
+        }
+        .guess-btn.correct .letter {
+            background: var(--sage-dark);
+            color: white;
+        }
+
+        .guess-prompt {
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: var(--gray);
+            font-style: italic;
+            margin-bottom: 24px;
+        }
+
+        /* === RESULTS PHASE === */
+        .results-container {
+            margin-top: 16px;
+        }
+        .result-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            animation: slideIn 0.5s ease both;
+        }
+        .result-row:nth-child(2) { animation-delay: 0.1s; }
+        .result-row:nth-child(3) { animation-delay: 0.2s; }
+        .result-row:nth-child(4) { animation-delay: 0.3s; }
+
+        .result-label {
+            width: 200px;
+            flex-shrink: 0;
+            font-size: 16px;
+            text-align: right;
+            color: var(--charcoal);
+        }
+        .result-bar-wrap {
+            flex: 1;
+            height: 44px;
+            background: #F0EBE5;
+            border-radius: 22px;
+            overflow: hidden;
+            position: relative;
+        }
+        .result-bar {
+            height: 100%;
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 16px;
+            font-weight: 700;
+            font-size: 16px;
+            color: white;
+            min-width: 48px;
+            animation: growBar 0.8s ease both;
+            transition: width 0.8s ease;
+        }
+        .result-bar.winner {
+            background: linear-gradient(90deg, var(--sage), var(--sage-dark));
+        }
+        .result-bar.other {
+            background: var(--gold-light);
+            color: var(--gray);
+        }
+        .result-count {
+            width: 60px;
+            text-align: center;
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .result-verdict {
+            text-align: center;
+            margin-top: 24px;
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            animation: bounceIn 0.5s ease 0.5s both;
+        }
+        .verdict-correct { color: var(--sage-dark); }
+        .verdict-wrong { color: var(--rose); }
+
+        .game-nav {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 32px;
+        }
+
+        /* === FINAL SCREEN === */
+        .final-score {
+            font-family: 'Playfair Display', serif;
+            font-size: 80px;
+            font-weight: 700;
+            color: var(--gold);
+            margin: 16px 0;
+        }
+        .final-msg {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: var(--charcoal);
+            text-align: center;
+            margin-bottom: 8px;
+        }
+        .final-sub {
+            font-size: 18px;
+            color: var(--gray);
+            margin-bottom: 40px;
+        }
+        .final-emoji {
+            font-size: 64px;
+            animation: float 2s ease-in-out infinite;
+            margin-bottom: 24px;
+        }
+
+        /* === LOADING/SPINNER === */
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid var(--gold-light);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 24px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        .error-box {
+            background: #FFF0F0;
+            border: 1px solid #E8A0A0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 14px;
+            color: #8B3A3A;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .guess-grid { grid-template-columns: 1fr; }
+            .game-q-text { font-size: 24px; }
+            .result-label { width: 120px; font-size: 14px; }
+            .welcome-title { font-size: 40px; }
+            .game-question-card { padding: 24px; }
+            .screen { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="screen-loading" class="screen active">
+    <div class="spinner"></div>
+    <div style="font-size:18px; color:var(--gray);">Caricamento dati...</div>
+</div>
+
+<!-- WELCOME -->
+<div id="screen-welcome" class="screen">
+    <div class="welcome-flourish">&#10053;</div>
+    <div class="welcome-title">Luca <span class="welcome-amp">&</span> Elisa</div>
+    <div class="welcome-subtitle">Il Gioco degli Sposi</div>
+    <div style="font-size:48px; margin: 16px 0;">&#128141;</div>
+    <div class="welcome-info">
+        Gli invitati hanno risposto.<br>
+        Riuscite a indovinare le risposte più popolari?
+    </div>
+    <div class="welcome-stats">
+        <div class="stat-box">
+            <div class="stat-number" id="stat-guests">0</div>
+            <div class="stat-label">Invitati</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number" id="stat-questions">0</div>
+            <div class="stat-label">Domande</div>
+        </div>
+    </div>
+    <button class="btn" onclick="startGame()">Si Comincia!</button>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen" style="justify-content: flex-start; padding-top: 40px;">
+    <div class="game-container">
+        <div class="game-header">
+            <div class="game-progress" id="game-progress">Domanda 1 di ?</div>
+            <div class="game-score">
+                <span class="score-icon">&#127942;</span>
+                <span id="score-display">0</span>
+            </div>
+        </div>
+
+        <div class="game-question-card">
+            <div class="game-q-number" id="game-q-number">DOMANDA 1</div>
+            <div class="game-q-text" id="game-q-text"></div>
+        </div>
+
+        <div class="guess-prompt" id="guess-prompt">Qual è la risposta più votata dagli invitati?</div>
+
+        <div class="guess-grid" id="guess-grid"></div>
+
+        <div class="results-container" id="results-container" style="display:none;"></div>
+
+        <div class="game-nav" id="game-nav" style="display:none;">
+            <button class="btn" id="btn-next" onclick="nextQuestion()">Prossima Domanda &rarr;</button>
+        </div>
+    </div>
+</div>
+
+<!-- FINAL -->
+<div id="screen-final" class="screen">
+    <div class="final-emoji" id="final-emoji">&#127881;</div>
+    <div class="final-msg">Conoscete i vostri invitati...</div>
+    <div class="final-score" id="final-score">0/0</div>
+    <div class="final-sub" id="final-verdict"></div>
+    <button class="btn" onclick="location.reload()" style="margin-top:24px;">Ricomincia</button>
+</div>
+
+<!-- ERROR -->
+<div id="screen-error" class="screen">
+    <div style="font-size:48px; margin-bottom:16px;">&#128533;</div>
+    <div class="error-box" id="error-message">Errore nel caricamento.</div>
+    <button class="btn" onclick="location.reload()" style="margin-top:24px;">Riprova</button>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURAZIONE
+// ============================================================
+const SHEET_ID = '1s13k4b13tXePUyL3BZiiIx1U5aRmx-VQkigbcjNHmIU';
+const SHEET_NAME_RISPOSTE = 'Risposte';
+// ============================================================
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+let questions = [];
+let answerData = []; // array of arrays: each guest's answers
+let currentQ = 0;
+let score = 0;
+let coupleGuess = -1;
+let revealed = false;
+
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    void el.offsetWidth;
+    el.classList.add('active');
+}
+
+async function fetchSheetData(sheetName) {
+    const url = sheetName
+        ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`
+        : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+
+    const res = await fetch(url);
+    const text = await res.text();
+    const startIdx = text.indexOf('(') + 1;
+    const endIdx = text.lastIndexOf(')');
+    return JSON.parse(text.substring(startIdx, endIdx));
+}
+
+async function loadAllData() {
+    try {
+        // 1. Load questions
+        const qData = await fetchSheetData(null);
+        questions = [];
+        for (const row of qData.table.rows) {
+            const cells = row.c;
+            if (!cells || !cells[0] || !cells[0].v) continue;
+            const q = {
+                text: String(cells[0].v).trim(),
+                options: []
+            };
+            for (let i = 1; i <= 4; i++) {
+                if (cells[i] && cells[i].v != null) {
+                    q.options.push(String(cells[i].v).trim());
+                }
+            }
+            if (q.options.length >= 2) questions.push(q);
+        }
+
+        if (questions.length === 0) {
+            throw new Error('Nessuna domanda trovata.');
+        }
+
+        // 2. Load answers
+        let guestCount = 0;
+        try {
+            const aData = await fetchSheetData(SHEET_NAME_RISPOSTE);
+            answerData = [];
+            for (const row of aData.table.rows) {
+                const cells = row.c;
+                if (!cells) continue;
+                // cells[0] = timestamp, cells[1] = name, cells[2+] = answers
+                const guestAnswers = [];
+                for (let i = 2; i < cells.length; i++) {
+                    guestAnswers.push(cells[i] && cells[i].v ? String(cells[i].v).trim() : '');
+                }
+                if (guestAnswers.some(a => a !== '')) {
+                    answerData.push(guestAnswers);
+                }
+            }
+            guestCount = answerData.length;
+        } catch (e) {
+            console.warn('Could not load answers sheet:', e);
+            answerData = [];
+        }
+
+        document.getElementById('stat-guests').textContent = guestCount;
+        document.getElementById('stat-questions').textContent = questions.length;
+
+        if (guestCount === 0) {
+            document.getElementById('error-message').textContent =
+                'Nessuna risposta trovata nel foglio "Risposte". Assicurati che almeno un invitato abbia completato il quiz!';
+            showScreen('screen-error');
+            return;
+        }
+
+        showScreen('screen-welcome');
+    } catch (err) {
+        console.error(err);
+        document.getElementById('error-message').textContent =
+            'Errore: ' + err.message;
+        showScreen('screen-error');
+    }
+}
+
+function startGame() {
+    currentQ = 0;
+    score = 0;
+    showQuestion();
+}
+
+function showQuestion() {
+    showScreen('screen-game');
+
+    const q = questions[currentQ];
+    revealed = false;
+    coupleGuess = -1;
+
+    document.getElementById('game-progress').textContent =
+        `Domanda ${currentQ + 1} di ${questions.length}`;
+    document.getElementById('score-display').textContent = score;
+    document.getElementById('game-q-number').textContent = `DOMANDA ${currentQ + 1}`;
+    document.getElementById('game-q-text').textContent = q.text;
+    document.getElementById('guess-prompt').textContent =
+        'Qual è la risposta più votata dagli invitati?';
+    document.getElementById('guess-prompt').style.display = '';
+
+    document.getElementById('results-container').style.display = 'none';
+    document.getElementById('results-container').innerHTML = '';
+    document.getElementById('game-nav').style.display = 'none';
+
+    const grid = document.getElementById('guess-grid');
+    grid.innerHTML = '';
+    grid.style.display = '';
+
+    q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'guess-btn';
+        btn.innerHTML = `<span class="letter">${LETTERS[idx]}</span><span>${opt}</span>`;
+        btn.addEventListener('click', () => makeGuess(idx));
+        grid.appendChild(btn);
+    });
+}
+
+function makeGuess(idx) {
+    if (revealed) return;
+    coupleGuess = idx;
+
+    // Highlight selection
+    const btns = document.querySelectorAll('.guess-btn');
+    btns.forEach(b => b.classList.remove('selected'));
+    btns[idx].classList.add('selected');
+
+    // Show reveal button
+    document.getElementById('guess-prompt').innerHTML =
+        `Avete scelto <strong>${LETTERS[idx]}</strong>. Pronti?`;
+
+    document.getElementById('game-nav').style.display = 'flex';
+    document.getElementById('btn-next').textContent = 'Rivela! ✨';
+    document.getElementById('btn-next').onclick = revealResults;
+}
+
+function revealResults() {
+    if (revealed) return;
+    revealed = true;
+
+    const q = questions[currentQ];
+
+    // Count votes for each option
+    const counts = new Array(q.options.length).fill(0);
+    for (const guestAnswers of answerData) {
+        const answer = guestAnswers[currentQ] || '';
+        const idx = LETTERS.indexOf(answer.toUpperCase());
+        if (idx >= 0 && idx < counts.length) {
+            counts[idx]++;
+        }
+    }
+
+    const totalVotes = counts.reduce((a, b) => a + b, 0);
+    const maxVotes = Math.max(...counts);
+    const winnerIdx = counts.indexOf(maxVotes);
+
+    // Did the couple guess correctly?
+    const isCorrect = coupleGuess === winnerIdx;
+    if (isCorrect) score++;
+
+    document.getElementById('score-display').textContent = score;
+
+    // Hide guess grid, show results
+    document.getElementById('guess-grid').style.display = 'none';
+    document.getElementById('guess-prompt').style.display = 'none';
+
+    const container = document.getElementById('results-container');
+    container.style.display = 'block';
+    container.innerHTML = '';
+
+    // Build result bars
+    q.options.forEach((opt, idx) => {
+        const pct = totalVotes > 0 ? Math.round((counts[idx] / totalVotes) * 100) : 0;
+        const isWinner = idx === winnerIdx;
+
+        const row = document.createElement('div');
+        row.className = 'result-row';
+        row.innerHTML = `
+            <div class="result-label"><strong>${LETTERS[idx]})</strong> ${opt}</div>
+            <div class="result-bar-wrap">
+                <div class="result-bar ${isWinner ? 'winner' : 'other'}"
+                     style="width: ${Math.max(pct, 5)}%">${pct}%</div>
+            </div>
+            <div class="result-count">${counts[idx]} vot${counts[idx] === 1 ? 'o' : 'i'}</div>
+        `;
+        container.appendChild(row);
+    });
+
+    // Verdict
+    const verdict = document.createElement('div');
+    verdict.className = 'result-verdict';
+    if (isCorrect) {
+        verdict.classList.add('verdict-correct');
+        verdict.innerHTML = '&#9989; Giusto! Vi conoscono bene!';
+        // Confetti!
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#D4849F', '#C9916E', '#A8C5A0', '#E8C9A8']
+        });
+    } else {
+        verdict.classList.add('verdict-wrong');
+        verdict.innerHTML = `&#10060; La risposta era <strong>${LETTERS[winnerIdx]}</strong>!`;
+    }
+    container.appendChild(verdict);
+
+    // Update nav button
+    const btnNext = document.getElementById('btn-next');
+    if (currentQ < questions.length - 1) {
+        btnNext.textContent = 'Prossima Domanda →';
+        btnNext.onclick = nextQuestion;
+    } else {
+        btnNext.textContent = 'Vedi il Risultato Finale! 🏆';
+        btnNext.onclick = showFinal;
+    }
+}
+
+function nextQuestion() {
+    currentQ++;
+    showQuestion();
+}
+
+function showFinal() {
+    showScreen('screen-final');
+
+    const total = questions.length;
+    const pct = Math.round((score / total) * 100);
+
+    document.getElementById('final-score').textContent = `${score}/${total}`;
+
+    let emoji, msg;
+    if (pct >= 80) {
+        emoji = '🏆';
+        msg = 'Incredibile! Conoscete i vostri invitati alla perfezione!';
+    } else if (pct >= 60) {
+        emoji = '🎉';
+        msg = 'Ottimo! Li conoscete davvero bene!';
+    } else if (pct >= 40) {
+        emoji = '😅';
+        msg = 'Non male... ma c\'è margine di miglioramento!';
+    } else if (pct >= 20) {
+        emoji = '🤔';
+        msg = 'Hmm... forse dovete uscire di più con i vostri amici!';
+    } else {
+        emoji = '😂';
+        msg = 'Ma li conoscete davvero questi invitati?!';
+    }
+
+    document.getElementById('final-emoji').textContent = emoji;
+    document.getElementById('final-verdict').textContent = msg;
+
+    // Big confetti celebration
+    const duration = 4000;
+    const end = Date.now() + duration;
+    (function frame() {
+        confetti({
+            particleCount: 4,
+            angle: 60, spread: 55,
+            origin: { x: 0, y: 0.7 },
+            colors: ['#D4849F', '#C9916E', '#A8C5A0', '#F0C6D4']
+        });
+        confetti({
+            particleCount: 4,
+            angle: 120, spread: 55,
+            origin: { x: 1, y: 0.7 },
+            colors: ['#D4849F', '#C9916E', '#A8C5A0', '#F0C6D4']
+        });
+        if (Date.now() < end) requestAnimationFrame(frame);
+    })();
+}
+
+// Start
+loadAllData();
+</script>
+
+</body>
+</html>

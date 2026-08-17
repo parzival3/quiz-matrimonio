@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz Matrimonio - Luca & Elisa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cream: #FDF6F0;
+            --gold: #C9916E;
+            --rose: #D4849F;
+            --charcoal: #2D2D2D;
+            --gray: #7A7A7A;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+        }
+        .flourish { font-size: 48px; color: var(--gold); margin-bottom: 12px; }
+        .title {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .amp { color: var(--rose); font-style: italic; }
+        .subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            color: var(--gray);
+            font-style: italic;
+            margin-bottom: 48px;
+        }
+        .buttons { display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 320px; }
+        .btn {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            padding: 18px 32px;
+            font-family: 'Lato', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--rose), var(--gold));
+            color: white;
+            box-shadow: 0 4px 15px rgba(201,145,110,0.3);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(201,145,110,0.4); }
+        .btn-secondary {
+            background: white;
+            color: var(--gold);
+            border: 2px solid var(--gold);
+        }
+        .btn-secondary:hover { background: #FFF9F5; transform: translateY(-2px); }
+        .note { margin-top: 32px; font-size: 13px; color: var(--gray); text-align: center; line-height: 1.5; }
+    </style>
+</head>
+<body>
+    <div class="flourish">&#10053;</div>
+    <div class="title">Luca <span class="amp">&</span> Elisa</div>
+    <div class="subtitle">Il Quiz del Matrimonio</div>
+    <div class="buttons">
+        <a href="quiz.html" class="btn btn-primary">&#127880; Gioca al Quiz</a>
+        <a href="reveal.html" class="btn btn-secondary">&#127942; Il Gioco degli Sposi</a>
+    </div>
+    <div class="note">
+        Il quiz è per gli invitati.<br>
+        "Il Gioco degli Sposi" è per Luca & Elisa<br>
+        da proiettare sullo schermo!
+    </div>
+</body>
+</html>
