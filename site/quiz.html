@@ -378,6 +378,18 @@
     <button class="btn" onclick="location.reload()" style="margin-top:24px;">Riprova</button>
 </div>
 
+<!-- ALREADY SUBMITTED -->
+<div id="screen-already" class="screen">
+    <div class="complete-icon">&#128075;</div>
+    <div class="complete-title">Ci hai già risposto!</div>
+    <div class="complete-msg">
+        Da questo dispositivo hai già inviato<br>
+        le tue risposte al quiz.<br><br>
+        Grazie di nuovo &mdash; a presto!
+    </div>
+    <div class="complete-emoji">&#128536;</div>
+</div>
+
 <script>
 // ============================================================
 // CONFIGURAZIONE
@@ -393,6 +405,34 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 let questions = [];
 let currentQ = 0;
 let answers = [];
+
+// ============================================================
+// ANTI-SPAM: un solo invio per dispositivo/browser
+// ============================================================
+const SUBMITTED_KEY = 'quizMatrimonio_submitted';
+const CLIENT_ID_KEY = 'quizMatrimonio_clientId';
+
+function getClientId() {
+    let id = localStorage.getItem(CLIENT_ID_KEY);
+    if (!id) {
+        id = (crypto.randomUUID ? crypto.randomUUID() :
+            'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+                const r = Math.random() * 16 | 0;
+                const v = c === 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            }));
+        localStorage.setItem(CLIENT_ID_KEY, id);
+    }
+    return id;
+}
+
+function hasAlreadySubmitted() {
+    return localStorage.getItem(SUBMITTED_KEY) === '1';
+}
+
+function markAsSubmitted() {
+    localStorage.setItem(SUBMITTED_KEY, '1');
+}
 
 // Screen management
 function showScreen(id) {
@@ -444,7 +484,11 @@ async function loadQuestions() {
             throw new Error('Nessuna domanda trovata nel foglio.');
         }
 
-        showScreen('screen-welcome');
+        if (hasAlreadySubmitted()) {
+            showScreen('screen-already');
+        } else {
+            showScreen('screen-welcome');
+        }
     } catch (err) {
         console.error('Error loading questions:', err);
         document.getElementById('error-message').textContent =
@@ -519,12 +563,24 @@ function selectOption(idx, btnEl) {
 }
 
 async function submitAnswers() {
+    // Blocco extra: se nel frattempo (es. doppio tab) risulta già inviato, non reinviare.
+    if (hasAlreadySubmitted()) {
+        showScreen('screen-already');
+        return;
+    }
+
     showScreen('screen-submitting');
 
     const payload = {
         timestamp: new Date().toISOString(),
+        clientId: getClientId(),
         answers: answers.map(a => a.answer)
     };
+
+    // Segna come inviato PRIMA della richiesta: con mode "no-cors" non possiamo
+    // leggere l'esito della risposta, quindi consideriamo l'invio come effettuato
+    // per evitare che l'utente possa reinviare più volte dallo stesso dispositivo.
+    markAsSubmitted();
 
     if (APPS_SCRIPT_URL) {
         try {

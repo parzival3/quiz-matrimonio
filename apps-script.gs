@@ -46,6 +46,9 @@ function setup() {
     }
   }
 
+  // Aggiungi la colonna per l'ID cliente (usata per bloccare invii duplicati)
+  headers.push('ClientId');
+
   // Scrivi le intestazioni
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
   sheet.getRange(1, 1, 1, headers.length)
@@ -76,6 +79,23 @@ function doPost(e) {
 
     const payload = JSON.parse(e.postData.contents);
 
+    // Anti-spam: blocca invii duplicati dallo stesso dispositivo/browser,
+    // riconosciuto tramite il clientId salvato nel localStorage del client.
+    const clientId = payload.clientId ? String(payload.clientId).trim() : '';
+    if (clientId) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        const numCols = sheet.getLastColumn();
+        const existingIds = sheet.getRange(2, numCols, lastRow - 1, 1).getValues();
+        const alreadySubmitted = existingIds.some(r => String(r[0]).trim() === clientId);
+        if (alreadySubmitted) {
+          return ContentService
+            .createTextOutput(JSON.stringify({ success: false, error: 'Hai già risposto al quiz.' }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+
     const row = [
       payload.timestamp || new Date().toISOString()
     ];
@@ -86,6 +106,11 @@ function doPost(e) {
         row.push(answer);
       }
     }
+
+    // Aggiungi il ClientId nell'ultima colonna (deve corrispondere all'intestazione)
+    const totalCols = sheet.getLastColumn();
+    while (row.length < totalCols - 1) row.push(''); // riempi eventuali colonne mancanti
+    row.push(clientId);
 
     sheet.appendRow(row);
 
