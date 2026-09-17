@@ -39,7 +39,7 @@ function setup() {
   const data = questionsSheet.getDataRange().getValues();
 
   // La prima riga è l'intestazione, le domande partono dalla riga 2
-  const headers = ['Timestamp', 'Nome'];
+  const headers = ['Timestamp'];
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] && String(data[i][0]).trim()) {
       headers.push('D' + (i));
@@ -56,7 +56,6 @@ function setup() {
   // Formatta
   sheet.setFrozenRows(1);
   sheet.setColumnWidth(1, 180);
-  sheet.setColumnWidth(2, 150);
 
   Logger.log('Setup completato! Foglio "Risposte" creato con ' + headers.length + ' colonne.');
 }
@@ -78,8 +77,7 @@ function doPost(e) {
     const payload = JSON.parse(e.postData.contents);
 
     const row = [
-      payload.timestamp || new Date().toISOString(),
-      payload.name || 'Anonimo'
+      payload.timestamp || new Date().toISOString()
     ];
 
     // Aggiungi le risposte (A, B, C, o D per ogni domanda)

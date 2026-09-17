@@ -129,37 +129,6 @@
             transform: none;
         }
 
-        /* === NAME SCREEN === */
-        .name-label {
-            font-family: 'Playfair Display', serif;
-            font-size: 28px;
-            margin-bottom: 24px;
-            color: var(--charcoal);
-        }
-        .name-input {
-            width: 100%;
-            max-width: 320px;
-            padding: 16px 20px;
-            font-family: 'Lato', sans-serif;
-            font-size: 18px;
-            border: 2px solid var(--gold-light);
-            border-radius: 12px;
-            background: var(--white);
-            color: var(--charcoal);
-            text-align: center;
-            outline: none;
-            transition: border-color 0.3s;
-            margin-bottom: 32px;
-        }
-        .name-input:focus { border-color: var(--gold); }
-        .name-input::placeholder { color: #ccc; }
-        .name-hint {
-            font-size: 13px;
-            color: var(--gray);
-            margin-top: -20px;
-            margin-bottom: 20px;
-        }
-
         /* === QUESTION SCREEN === */
         .quiz-container {
             width: 100%;
@@ -361,16 +330,7 @@
         Poi toccherà a loro indovinare<br>
         cosa avete risposto...
     </div>
-    <button class="btn" onclick="showScreen('screen-name')">Inizia il Quiz!</button>
-</div>
-
-<!-- NAME -->
-<div id="screen-name" class="screen">
-    <div class="name-label">Come ti chiami?</div>
-    <input type="text" id="guest-name" class="name-input" placeholder="Il tuo nome" maxlength="40"
-           onkeydown="if(event.key==='Enter') startQuiz()">
-    <p class="name-hint">Il tuo nome apparirà nei risultati</p>
-    <button class="btn" id="btn-start" onclick="startQuiz()" disabled>Avanti</button>
+    <button class="btn" onclick="startQuiz()">Inizia il Quiz!</button>
 </div>
 
 <!-- QUIZ -->
@@ -401,7 +361,7 @@
 <!-- COMPLETE -->
 <div id="screen-complete" class="screen">
     <div class="complete-icon">&#127881;</div>
-    <div class="complete-title">Grazie <span id="thank-name"></span>!</div>
+    <div class="complete-title">Grazie!</div>
     <div class="complete-msg">
         Le tue risposte sono state inviate!<br><br>
         Ora tocca a Luca & Elisa indovinare<br>
@@ -433,12 +393,6 @@ const LETTERS = ['A', 'B', 'C', 'D'];
 let questions = [];
 let currentQ = 0;
 let answers = [];
-let guestName = '';
-
-// Enable start button when name is typed
-document.getElementById('guest-name').addEventListener('input', (e) => {
-    document.getElementById('btn-start').disabled = e.target.value.trim().length === 0;
-});
 
 // Screen management
 function showScreen(id) {
@@ -500,8 +454,6 @@ async function loadQuestions() {
 }
 
 function startQuiz() {
-    guestName = document.getElementById('guest-name').value.trim();
-    if (!guestName) return;
     currentQ = 0;
     answers = [];
     showQuestion();
@@ -570,7 +522,6 @@ async function submitAnswers() {
     showScreen('screen-submitting');
 
     const payload = {
-        name: guestName,
         timestamp: new Date().toISOString(),
         answers: answers.map(a => a.answer)
     };
@@ -594,7 +545,6 @@ async function submitAnswers() {
 }
 
 function showComplete() {
-    document.getElementById('thank-name').textContent = guestName;
     showScreen('screen-complete');
 
     // Confetti burst!
