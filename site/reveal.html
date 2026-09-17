@@ -481,8 +481,11 @@ function showScreen(id) {
 }
 
 async function fetchSheetData(sheetName) {
+    // headers=1: dice a Google che c'è esattamente 1 riga di intestazione,
+    // evitando che il rilevamento automatico ne "mangi" per errore altre
+    // (facendo sparire le prime righe di dati, es. le prime domande).
     // Cache-buster: evita di ricevere una versione cachata/vecchia del foglio.
-    const cacheBuster = `&_=${Date.now()}`;
+    const cacheBuster = `&headers=1&_=${Date.now()}`;
     const url = sheetName
         ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}${cacheBuster}`
         : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json${cacheBuster}`;

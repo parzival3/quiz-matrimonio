@@ -447,9 +447,13 @@ function showScreen(id) {
 // Fetch questions from Google Sheet
 async function loadQuestions() {
     try {
+        // headers=1: dice a Google che c'è esattamente 1 riga di intestazione.
+        // Senza questo parametro, Google prova a indovinare quante righe sono
+        // di intestazione e a volte include per errore anche le prime righe
+        // di domande, facendole sparire dal risultato.
         // Cache-buster: evita che il browser (o la CDN di Google) restituisca
         // una versione vecchia e cachata del foglio con meno domande.
-        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&_=${Date.now()}`;
+        const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&headers=1&_=${Date.now()}`;
         const res = await fetch(url, { cache: 'no-store' });
         const text = await res.text();
 
