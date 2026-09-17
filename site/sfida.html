@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sfida degli Sposi - Luca & Elisa</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --cream: #FDF6F0;
+            --white: #FFFFFF;
+            --gold: #C9916E;
+            --gold-light: #E8C9A8;
+            --rose: #D4849F;
+            --rose-light: #F0C6D4;
+            --charcoal: #2D2D2D;
+            --gray: #7A7A7A;
+            --sage: #A8C5A0;
+            --sage-dark: #7BA872;
+            --luca: #6E9BC9;
+            --luca-light: #C5DCF0;
+            --elisa: #D4849F;
+            --elisa-light: #F0C6D4;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Lato', sans-serif;
+            background: var(--cream);
+            color: var(--charcoal);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 40px;
+            animation: fadeIn 0.6s ease;
+        }
+        .screen.active { display: flex; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes growBar { from { width: 0; } }
+        @keyframes bounceIn {
+            0% { transform: scale(0); }
+            60% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* === WELCOME === */
+        .welcome-flourish { font-size: 64px; color: var(--gold); margin-bottom: 16px; }
+        .welcome-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 56px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .welcome-amp { color: var(--rose); font-style: italic; }
+        .welcome-subtitle {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            color: var(--gray);
+            font-style: italic;
+            margin-bottom: 16px;
+        }
+        .welcome-info {
+            font-size: 18px;
+            color: var(--gray);
+            margin-bottom: 40px;
+            text-align: center;
+            line-height: 1.6;
+            max-width: 560px;
+        }
+        .welcome-stats {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 40px;
+        }
+        .stat-box { text-align: center; }
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--gold);
+        }
+        .stat-label {
+            font-size: 14px;
+            color: var(--gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--rose), var(--gold));
+            color: white;
+            border: none;
+            padding: 18px 56px;
+            font-family: 'Lato', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(201,145,110,0.3);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(201,145,110,0.4);
+        }
+        .btn.luca-btn {
+            background: linear-gradient(135deg, var(--luca), #4A7FB5);
+            box-shadow: 0 4px 15px rgba(110,155,201,0.3);
+        }
+        .btn.elisa-btn {
+            background: linear-gradient(135deg, var(--elisa), #B86480);
+            box-shadow: 0 4px 15px rgba(212,132,159,0.3);
+        }
+
+        /* === SCOREBOARD === */
+        .scoreboard {
+            display: flex;
+            gap: 24px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 24px;
+        }
+        .score-card {
+            flex: 1;
+            border-radius: 16px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+        }
+        .score-card.luca { background: var(--luca-light); border: 3px solid var(--luca); }
+        .score-card.elisa { background: var(--elisa-light); border: 3px solid var(--elisa); }
+        .score-card.luca.leading { border-width: 4px; box-shadow: 0 4px 20px rgba(110,155,201,0.35); }
+        .score-card.elisa.leading { border-width: 4px; box-shadow: 0 4px 20px rgba(212,132,159,0.35); }
+        .score-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+        }
+        .score-name.luca { color: var(--luca); }
+        .score-name.elisa { color: var(--elisa); }
+        .score-pts {
+            font-family: 'Playfair Display', serif;
+            font-size: 40px;
+            font-weight: 700;
+        }
+        .score-pts.luca { color: var(--luca); }
+        .score-pts.elisa { color: var(--elisa); }
+
+        /* === GAME SCREEN === */
+        .game-container {
+            width: 100%;
+            max-width: 900px;
+        }
+        .game-progress-wrap {
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray);
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 16px;
+        }
+        .game-question-card {
+            background: var(--white);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+            margin-bottom: 24px;
+            animation: fadeIn 0.5s ease;
+        }
+        .game-q-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--rose);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 16px;
+        }
+        .game-q-text {
+            font-family: 'Playfair Display', serif;
+            font-size: 30px;
+            line-height: 1.4;
+        }
+
+        /* === TURN BANNER === */
+        .turn-banner {
+            border-radius: 14px;
+            padding: 14px 24px;
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            animation: bounceIn 0.4s ease;
+        }
+        .turn-banner.luca { background: var(--luca-light); color: var(--luca); border: 2px solid var(--luca); }
+        .turn-banner.elisa { background: var(--elisa-light); color: var(--elisa); border: 2px solid var(--elisa); }
+
+        /* === HIDDEN CHOICE === */
+        .hidden-choice {
+            background: var(--white);
+            border-radius: 14px;
+            padding: 14px 24px;
+            text-align: center;
+            font-size: 16px;
+            color: var(--gray);
+            margin-bottom: 20px;
+            border: 2px dashed #ddd;
+        }
+
+        /* === GUESS GRID === */
+        .guess-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .guess-btn {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 18px 20px;
+            background: var(--white);
+            border: 3px solid #E8E0D8;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            font-family: 'Lato', sans-serif;
+            font-size: 17px;
+            color: var(--charcoal);
+            text-align: left;
+            line-height: 1.4;
+        }
+        .guess-btn:hover { border-color: var(--gold); background: #FFF9F5; transform: translateY(-2px); }
+        .guess-btn.sel-luca { border-color: var(--luca); background: var(--luca-light); }
+        .guess-btn.sel-elisa { border-color: var(--elisa); background: var(--elisa-light); }
+        .guess-btn.disabled { pointer-events: none; }
+        .guess-btn .letter {
+            flex-shrink: 0;
+            width: 42px; height: 42px;
+            border-radius: 50%;
+            background: var(--cream);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 17px;
+            color: var(--gold);
+        }
+        .guess-btn.sel-luca .letter { background: var(--luca); color: white; }
+        .guess-btn.sel-elisa .letter { background: var(--elisa); color: white; }
+
+        /* === RESULTS === */
+        .results-container { margin-top: 8px; }
+        .result-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+            animation: slideIn 0.5s ease both;
+        }
+        .result-row:nth-child(2) { animation-delay: 0.08s; }
+        .result-row:nth-child(3) { animation-delay: 0.16s; }
+        .result-row:nth-child(4) { animation-delay: 0.24s; }
+        .result-label {
+            width: 180px;
+            flex-shrink: 0;
+            font-size: 15px;
+            text-align: right;
+            color: var(--charcoal);
+        }
+        .result-bar-wrap {
+            flex: 1;
+            height: 42px;
+            background: #F0EBE5;
+            border-radius: 21px;
+            overflow: hidden;
+            position: relative;
+        }
+        .result-bar {
+            height: 100%;
+            border-radius: 21px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 14px;
+            font-weight: 700;
+            font-size: 15px;
+            color: white;
+            min-width: 44px;
+            animation: growBar 0.8s ease both;
+        }
+        .result-bar.winner { background: linear-gradient(90deg, var(--sage), var(--sage-dark)); }
+        .result-bar.other { background: var(--gold-light); color: var(--gray); }
+        .result-count { width: 54px; text-align: center; font-size: 13px; color: var(--gray); }
+
+        /* Who-chose badges on result rows */
+        .who-badges { display: flex; gap: 4px; }
+        .badge {
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            color: white;
+            flex-shrink: 0;
+        }
+        .badge.luca { background: var(--luca); }
+        .badge.elisa { background: var(--elisa); }
+
+        /* === VERDICT CARDS === */
+        .verdicts {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+            animation: bounceIn 0.5s ease 0.4s both;
+        }
+        .verdict-card {
+            flex: 1;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: center;
+            font-family: 'Playfair Display', serif;
+            font-size: 18px;
+            font-weight: 700;
+        }
+        .verdict-card.correct { background: #E8F5E4; color: var(--sage-dark); border: 2px solid var(--sage-dark); }
+        .verdict-card.wrong { background: #FFF0F0; color: #B03060; border: 2px solid #E8A0A0; }
+        .verdict-card .v-name { font-size: 14px; font-weight: 400; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+
+        .game-nav {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        /* === FINAL === */
+        .final-container {
+            text-align: center;
+            max-width: 600px;
+        }
+        .final-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 32px;
+        }
+        .final-scores {
+            display: flex;
+            gap: 24px;
+            justify-content: center;
+            margin-bottom: 32px;
+        }
+        .final-score-card {
+            border-radius: 20px;
+            padding: 28px 36px;
+            text-align: center;
+        }
+        .final-score-card.luca { background: var(--luca-light); border: 4px solid var(--luca); }
+        .final-score-card.elisa { background: var(--elisa-light); border: 4px solid var(--elisa); }
+        .final-score-card.winner {
+            transform: scale(1.08);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        .final-score-name {
+            font-family: 'Playfair Display', serif;
+            font-size: 26px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .final-score-name.luca { color: var(--luca); }
+        .final-score-name.elisa { color: var(--elisa); }
+        .final-score-pts {
+            font-family: 'Playfair Display', serif;
+            font-size: 64px;
+            font-weight: 700;
+            line-height: 1;
+        }
+        .final-score-pts.luca { color: var(--luca); }
+        .final-score-pts.elisa { color: var(--elisa); }
+        .final-score-total { font-size: 16px; color: var(--gray); margin-top: 4px; }
+        .final-trophy { font-size: 56px; margin-bottom: 8px; animation: float 2s ease-in-out infinite; }
+        .final-winner-msg {
+            font-family: 'Playfair Display', serif;
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+        .final-sub { font-size: 18px; color: var(--gray); margin-bottom: 36px; }
+
+        /* === LOADING/ERROR === */
+        .spinner {
+            width: 48px; height: 48px;
+            border: 4px solid var(--gold-light);
+            border-top-color: var(--gold);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 24px;
+        }
+        .error-box {
+            background: #FFF0F0;
+            border: 1px solid #E8A0A0;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 16px 0;
+            font-size: 14px;
+            color: #8B3A3A;
+            text-align: center;
+            max-width: 500px;
+        }
+
+        @media (max-width: 768px) {
+            .guess-grid { grid-template-columns: 1fr; }
+            .game-q-text { font-size: 22px; }
+            .result-label { width: 110px; font-size: 13px; }
+            .welcome-title { font-size: 38px; }
+            .game-question-card { padding: 22px; }
+            .screen { padding: 16px; }
+            .scoreboard { gap: 12px; }
+            .verdicts { flex-direction: column; }
+            .final-scores { flex-direction: column; align-items: center; }
+            .final-score-card.winner { transform: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div id="screen-loading" class="screen active">
+    <div class="spinner"></div>
+    <div style="font-size:18px; color:var(--gray);">Caricamento dati...</div>
+</div>
+
+<!-- WELCOME -->
+<div id="screen-welcome" class="screen">
+    <div class="welcome-flourish">&#10053;</div>
+    <div class="welcome-title">Luca <span class="welcome-amp">&</span> Elisa</div>
+    <div class="welcome-subtitle">La Sfida degli Sposi</div>
+    <div style="font-size:48px; margin: 16px 0;">&#9876;&#65039;</div>
+    <div class="welcome-info">
+        Gli invitati hanno votato. Ora Luca ed Elisa sfidano chi conosce meglio gli ospiti!<br><br>
+        Per ogni domanda ognuno sceglie la risposta più votata — senza guardare l'altro.<br>
+        Chi indovina guadagna un punto. Vince chi ne prende di più!
+    </div>
+    <div class="welcome-stats">
+        <div class="stat-box">
+            <div class="stat-number" id="stat-guests">0</div>
+            <div class="stat-label">Invitati</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-number" id="stat-questions">0</div>
+            <div class="stat-label">Domande</div>
+        </div>
+    </div>
+    <button class="btn" onclick="startGame()">Si Comincia!</button>
+</div>
+
+<!-- GAME -->
+<div id="screen-game" class="screen" style="justify-content: flex-start; padding-top: 32px;">
+    <div class="game-container">
+
+        <!-- Scoreboard -->
+        <div class="scoreboard">
+            <div class="score-card luca" id="score-card-luca">
+                <div class="score-name luca">Luca</div>
+                <div class="score-pts luca" id="score-luca">0</div>
+            </div>
+            <div class="score-card elisa" id="score-card-elisa">
+                <div class="score-name elisa">Elisa</div>
+                <div class="score-pts elisa" id="score-elisa">0</div>
+            </div>
+        </div>
+
+        <div class="game-progress-wrap" id="game-progress">DOMANDA 1 DI ?</div>
+
+        <div class="game-question-card">
+            <div class="game-q-number" id="game-q-number">DOMANDA 1</div>
+            <div class="game-q-text" id="game-q-text"></div>
+        </div>
+
+        <!-- Turn banner -->
+        <div class="turn-banner luca" id="turn-banner">&#128100; Tocca a Luca scegliere!</div>
+
+        <!-- Hidden choice indicator (shown after first person picks) -->
+        <div class="hidden-choice" id="hidden-choice" style="display:none;"></div>
+
+        <!-- Options grid -->
+        <div class="guess-grid" id="guess-grid"></div>
+
+        <!-- Results (shown after reveal) -->
+        <div class="results-container" id="results-container" style="display:none;"></div>
+
+        <!-- Verdict cards -->
+        <div class="verdicts" id="verdicts" style="display:none;">
+            <div class="verdict-card" id="verdict-luca">
+                <div class="v-name">Luca</div>
+                <span id="verdict-luca-text"></span>
+            </div>
+            <div class="verdict-card" id="verdict-elisa">
+                <div class="v-name">Elisa</div>
+                <span id="verdict-elisa-text"></span>
+            </div>
+        </div>
+
+        <div class="game-nav" id="game-nav" style="display:none;">
+            <button class="btn" id="btn-action" onclick="onActionBtn()"></button>
+        </div>
+
+    </div>
+</div>
+
+<!-- FINAL -->
+<div id="screen-final" class="screen">
+    <div class="final-container">
+        <div class="final-trophy" id="final-trophy">&#127942;</div>
+        <div class="final-title">Risultato Finale</div>
+        <div class="final-scores">
+            <div class="final-score-card luca" id="final-card-luca">
+                <div class="final-score-name luca">Luca</div>
+                <div class="final-score-pts luca" id="final-pts-luca">0</div>
+                <div class="final-score-total" id="final-total-luca"></div>
+            </div>
+            <div class="final-score-card elisa" id="final-card-elisa">
+                <div class="final-score-name elisa">Elisa</div>
+                <div class="final-score-pts elisa" id="final-pts-elisa">0</div>
+                <div class="final-score-total" id="final-total-elisa"></div>
+            </div>
+        </div>
+        <div class="final-winner-msg" id="final-winner-msg"></div>
+        <div class="final-sub" id="final-sub"></div>
+        <button class="btn" onclick="location.reload()">Ricomincia</button>
+    </div>
+</div>
+
+<!-- ERROR -->
+<div id="screen-error" class="screen">
+    <div style="font-size:48px; margin-bottom:16px;">&#128533;</div>
+    <div class="error-box" id="error-message">Errore nel caricamento.</div>
+    <button class="btn" onclick="location.reload()" style="margin-top:24px;">Riprova</button>
+</div>
+
+<script>
+// ============================================================
+// CONFIGURAZIONE
+// ============================================================
+const SHEET_ID = '1s13k4b13tXePUyL3BZiiIx1U5aRmx-VQkigbcjNHmIU';
+const SHEET_NAME_RISPOSTE = 'Risposte';
+// ============================================================
+
+const LETTERS = ['A', 'B', 'C', 'D'];
+
+// Game state
+let questions = [];
+let answerData = [];   // each element: array of answer letters (one per question)
+let currentQ = 0;
+let scoreLuca = 0;
+let scoreElisa = 0;
+
+// Per-question turn state: 'luca' | 'elisa' | 'reveal'
+let turnPhase = 'luca';
+let guessLuca = -1;
+let guessElisa = -1;
+
+// ============================================================
+// HELPERS
+// ============================================================
+function showScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    const el = document.getElementById(id);
+    void el.offsetWidth;
+    el.classList.add('active');
+}
+
+function updateScoreboard() {
+    document.getElementById('score-luca').textContent = scoreLuca;
+    document.getElementById('score-elisa').textContent = scoreElisa;
+    const cardLuca = document.getElementById('score-card-luca');
+    const cardElisa = document.getElementById('score-card-elisa');
+    cardLuca.classList.toggle('leading', scoreLuca > scoreElisa);
+    cardElisa.classList.toggle('leading', scoreElisa > scoreLuca);
+}
+
+function setActionBtn(label, handler) {
+    const btn = document.getElementById('btn-action');
+    btn.textContent = label;
+    btn._handler = handler;
+    document.getElementById('game-nav').style.display = 'flex';
+}
+
+function onActionBtn() {
+    const btn = document.getElementById('btn-action');
+    if (btn._handler) btn._handler();
+}
+
+// ============================================================
+// DATA LOADING
+// ============================================================
+async function fetchSheetData(sheetName) {
+    const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+    const url = sheetName ? base + `&sheet=${encodeURIComponent(sheetName)}` : base;
+    const res = await fetch(url);
+    const text = await res.text();
+    const start = text.indexOf('(') + 1;
+    const end = text.lastIndexOf(')');
+    return JSON.parse(text.substring(start, end));
+}
+
+async function loadAllData() {
+    try {
+        // Questions
+        const qData = await fetchSheetData(null);
+        questions = [];
+        for (const row of qData.table.rows) {
+            const cells = row.c;
+            if (!cells || !cells[0] || !cells[0].v) continue;
+            const q = { text: String(cells[0].v).trim(), options: [] };
+            for (let i = 1; i <= 4; i++) {
+                if (cells[i] && cells[i].v != null) q.options.push(String(cells[i].v).trim());
+            }
+            if (q.options.length >= 2) questions.push(q);
+        }
+        if (questions.length === 0) throw new Error('Nessuna domanda trovata.');
+
+        // Answers — column 0 = timestamp, columns 1+ = answer letters (no nome column)
+        let guestCount = 0;
+        try {
+            const aData = await fetchSheetData(SHEET_NAME_RISPOSTE);
+            answerData = [];
+            for (const row of aData.table.rows) {
+                const cells = row.c;
+                if (!cells) continue;
+                const guestAnswers = [];
+                for (let i = 1; i < cells.length; i++) {
+                    guestAnswers.push(cells[i] && cells[i].v ? String(cells[i].v).trim() : '');
+                }
+                if (guestAnswers.some(a => a !== '')) answerData.push(guestAnswers);
+            }
+            guestCount = answerData.length;
+        } catch (e) {
+            console.warn('Could not load answers sheet:', e);
+            answerData = [];
+        }
+
+        document.getElementById('stat-guests').textContent = guestCount;
+        document.getElementById('stat-questions').textContent = questions.length;
+
+        if (guestCount === 0) {
+            document.getElementById('error-message').textContent =
+                'Nessuna risposta trovata nel foglio "Risposte". Almeno un invitato deve completare il quiz!';
+            showScreen('screen-error');
+            return;
+        }
+
+        showScreen('screen-welcome');
+    } catch (err) {
+        console.error(err);
+        document.getElementById('error-message').textContent = 'Errore: ' + err.message;
+        showScreen('screen-error');
+    }
+}
+
+// ============================================================
+// GAME FLOW
+// ============================================================
+function startGame() {
+    currentQ = 0;
+    scoreLuca = 0;
+    scoreElisa = 0;
+    showQuestion();
+}
+
+function showQuestion() {
+    showScreen('screen-game');
+
+    turnPhase = 'luca';
+    guessLuca = -1;
+    guessElisa = -1;
+
+    const q = questions[currentQ];
+
+    document.getElementById('game-progress').textContent =
+        `DOMANDA ${currentQ + 1} DI ${questions.length}`;
+    document.getElementById('game-q-number').textContent = `DOMANDA ${currentQ + 1}`;
+    document.getElementById('game-q-text').textContent = q.text;
+
+    document.getElementById('results-container').style.display = 'none';
+    document.getElementById('results-container').innerHTML = '';
+    document.getElementById('verdicts').style.display = 'none';
+    document.getElementById('game-nav').style.display = 'none';
+    document.getElementById('hidden-choice').style.display = 'none';
+
+    updateScoreboard();
+    renderOptions();
+    setTurnBanner('luca');
+}
+
+function setTurnBanner(who) {
+    const banner = document.getElementById('turn-banner');
+    banner.className = `turn-banner ${who}`;
+    const icon = who === 'luca' ? '&#128100;' : '&#128102;';
+    const name = who === 'luca' ? 'Luca' : 'Elisa';
+    banner.innerHTML = `${icon} Tocca a <strong>${name}</strong> scegliere!`;
+}
+
+function renderOptions(lockedClass) {
+    const q = questions[currentQ];
+    const grid = document.getElementById('guess-grid');
+    grid.innerHTML = '';
+    grid.style.display = '';
+
+    q.options.forEach((opt, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'guess-btn';
+        if (lockedClass) btn.classList.add('disabled');
+        btn.innerHTML = `<span class="letter">${LETTERS[idx]}</span><span>${opt}</span>`;
+        btn.addEventListener('click', () => handlePick(idx));
+        grid.appendChild(btn);
+    });
+}
+
+function handlePick(idx) {
+    if (turnPhase === 'luca') {
+        guessLuca = idx;
+        turnPhase = 'elisa';
+
+        // Mark Luca's choice, then hide the grid and hand over to Elisa
+        const btns = document.querySelectorAll('.guess-btn');
+        btns.forEach((b, i) => {
+            b.classList.add('disabled');
+            if (i === idx) b.classList.add('sel-luca');
+        });
+
+        // Show "hand the device to Elisa" prompt — action button reveals fresh grid for Elisa
+        setActionBtn('Passa il telefono a Elisa ➔', () => {
+            document.getElementById('game-nav').style.display = 'none';
+            document.getElementById('hidden-choice').style.display = 'block';
+            document.getElementById('hidden-choice').textContent =
+                `✔ Luca ha scelto. Tocca a Elisa!`;
+            renderOptions();
+            setTurnBanner('elisa');
+        });
+
+    } else if (turnPhase === 'elisa') {
+        guessElisa = idx;
+        turnPhase = 'reveal';
+
+        const btns = document.querySelectorAll('.guess-btn');
+        btns.forEach((b, i) => {
+            b.classList.add('disabled');
+            if (i === idx) b.classList.add('sel-elisa');
+        });
+
+        setActionBtn('Rivela le risposte! ✨', revealResults);
+    }
+}
+
+function revealResults() {
+    const q = questions[currentQ];
+
+    // Count votes
+    const counts = new Array(q.options.length).fill(0);
+    for (const guestAnswers of answerData) {
+        const answer = guestAnswers[currentQ] || '';
+        const idx = LETTERS.indexOf(answer.toUpperCase());
+        if (idx >= 0 && idx < counts.length) counts[idx]++;
+    }
+
+    const totalVotes = counts.reduce((a, b) => a + b, 0);
+    const maxVotes = Math.max(...counts);
+    const winnerIdx = counts.indexOf(maxVotes);
+
+    const lucaRight = guessLuca === winnerIdx;
+    const elisaRight = guessElisa === winnerIdx;
+    if (lucaRight) scoreLuca++;
+    if (elisaRight) scoreElisa++;
+    updateScoreboard();
+
+    // Hide options grid and turn banner
+    document.getElementById('guess-grid').style.display = 'none';
+    document.getElementById('turn-banner').style.display = 'none';
+    document.getElementById('hidden-choice').style.display = 'none';
+    document.getElementById('game-nav').style.display = 'none';
+
+    // Build result bars
+    const container = document.getElementById('results-container');
+    container.style.display = 'block';
+    container.innerHTML = '';
+
+    q.options.forEach((opt, idx) => {
+        const pct = totalVotes > 0 ? Math.round((counts[idx] / totalVotes) * 100) : 0;
+        const isWinner = idx === winnerIdx;
+
+        // Who chose this option
+        const badges = [];
+        if (guessLuca === idx) badges.push('<span class="badge luca">L</span>');
+        if (guessElisa === idx) badges.push('<span class="badge elisa">E</span>');
+
+        const row = document.createElement('div');
+        row.className = 'result-row';
+        row.innerHTML = `
+            <div class="result-label"><strong>${LETTERS[idx]})</strong> ${opt}</div>
+            <div class="result-bar-wrap">
+                <div class="result-bar ${isWinner ? 'winner' : 'other'}"
+                     style="width:${Math.max(pct, 5)}%">${pct}%</div>
+            </div>
+            <div class="result-count">${counts[idx]} vot${counts[idx] === 1 ? 'o' : 'i'}</div>
+            <div class="who-badges">${badges.join('')}</div>
+        `;
+        container.appendChild(row);
+    });
+
+    // Verdict cards
+    const verdicts = document.getElementById('verdicts');
+    verdicts.style.display = 'flex';
+
+    const cardLuca = document.getElementById('verdict-luca');
+    cardLuca.className = `verdict-card ${lucaRight ? 'correct' : 'wrong'}`;
+    document.getElementById('verdict-luca-text').innerHTML = lucaRight
+        ? '&#9989; Giusto!'
+        : `&#10060; Sbagliato (${LETTERS[guessLuca]})`;
+
+    const cardElisa = document.getElementById('verdict-elisa');
+    cardElisa.className = `verdict-card ${elisaRight ? 'correct' : 'wrong'}`;
+    document.getElementById('verdict-elisa-text').innerHTML = elisaRight
+        ? '&#9989; Giusto!'
+        : `&#10060; Sbagliato (${LETTERS[guessElisa]})`;
+
+    // Confetti if anyone was right
+    if (lucaRight || elisaRight) {
+        confetti({
+            particleCount: 80,
+            spread: 65,
+            origin: { y: 0.6 },
+            colors: lucaRight && elisaRight
+                ? ['#6E9BC9', '#D4849F', '#A8C5A0']
+                : lucaRight ? ['#6E9BC9', '#C5DCF0'] : ['#D4849F', '#F0C6D4']
+        });
+    }
+
+    // Nav
+    if (currentQ < questions.length - 1) {
+        setActionBtn('Prossima Domanda →', nextQuestion);
+    } else {
+        setActionBtn('Vedi il Risultato Finale! 🏆', showFinal);
+    }
+}
+
+function nextQuestion() {
+    currentQ++;
+    document.getElementById('turn-banner').style.display = '';
+    showQuestion();
+}
+
+function showFinal() {
+    showScreen('screen-final');
+
+    const total = questions.length;
+    document.getElementById('final-pts-luca').textContent = scoreLuca;
+    document.getElementById('final-pts-elisa').textContent = scoreElisa;
+    document.getElementById('final-total-luca').textContent = `su ${total}`;
+    document.getElementById('final-total-elisa').textContent = `su ${total}`;
+
+    const cardLuca = document.getElementById('final-card-luca');
+    const cardElisa = document.getElementById('final-card-elisa');
+    cardLuca.classList.remove('winner');
+    cardElisa.classList.remove('winner');
+
+    let trophy, winnerMsg, sub;
+
+    if (scoreLuca > scoreElisa) {
+        cardLuca.classList.add('winner');
+        trophy = '&#127942;';
+        winnerMsg = 'Vince <strong>Luca</strong>!';
+        const gap = scoreLuca - scoreElisa;
+        sub = gap === 1
+            ? 'Di un solo punto — bella sfida!'
+            : `Con ${gap} punti di vantaggio!`;
+    } else if (scoreElisa > scoreLuca) {
+        cardElisa.classList.add('winner');
+        trophy = '&#127942;';
+        winnerMsg = 'Vince <strong>Elisa</strong>!';
+        const gap = scoreElisa - scoreLuca;
+        sub = gap === 1
+            ? 'Di un solo punto — bella sfida!'
+            : `Con ${gap} punti di vantaggio!`;
+    } else {
+        trophy = '&#129309;';
+        winnerMsg = 'Pareggio!';
+        sub = 'Li conoscete entrambi alla perfezione!';
+    }
+
+    document.getElementById('final-trophy').innerHTML = trophy;
+    document.getElementById('final-winner-msg').innerHTML = winnerMsg;
+    document.getElementById('final-sub').textContent = sub;
+
+    const duration = 4500;
+    const endTime = Date.now() + duration;
+    (function frame() {
+        confetti({ particleCount: 4, angle: 60, spread: 55, origin: { x: 0, y: 0.7 },
+            colors: ['#6E9BC9', '#D4849F', '#A8C5A0', '#E8C9A8'] });
+        confetti({ particleCount: 4, angle: 120, spread: 55, origin: { x: 1, y: 0.7 },
+            colors: ['#6E9BC9', '#D4849F', '#A8C5A0', '#E8C9A8'] });
+        if (Date.now() < endTime) requestAnimationFrame(frame);
+    })();
+}
+
+// Start!
+loadAllData();
+</script>
+
+</body>
+</html>
