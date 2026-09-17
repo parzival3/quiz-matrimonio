@@ -481,11 +481,13 @@ function showScreen(id) {
 }
 
 async function fetchSheetData(sheetName) {
+    // Cache-buster: evita di ricevere una versione cachata/vecchia del foglio.
+    const cacheBuster = `&_=${Date.now()}`;
     const url = sheetName
-        ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`
-        : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
+        ? `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}${cacheBuster}`
+        : `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json${cacheBuster}`;
 
-    const res = await fetch(url);
+    const res = await fetch(url, { cache: 'no-store' });
     const text = await res.text();
     const startIdx = text.indexOf('(') + 1;
     const endIdx = text.lastIndexOf(')');

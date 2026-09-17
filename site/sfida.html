@@ -620,9 +620,11 @@ function onActionBtn() {
 // DATA LOADING
 // ============================================================
 async function fetchSheetData(sheetName) {
+    // Cache-buster: evita di ricevere una versione cachata/vecchia del foglio.
     const base = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json`;
-    const url = sheetName ? base + `&sheet=${encodeURIComponent(sheetName)}` : base;
-    const res = await fetch(url);
+    const cacheBuster = `&_=${Date.now()}`;
+    const url = (sheetName ? base + `&sheet=${encodeURIComponent(sheetName)}` : base) + cacheBuster;
+    const res = await fetch(url, { cache: 'no-store' });
     const text = await res.text();
     const start = text.indexOf('(') + 1;
     const end = text.lastIndexOf(')');
