@@ -524,9 +524,11 @@ async function loadAllData() {
             for (const row of aData.table.rows) {
                 const cells = row.c;
                 if (!cells) continue;
-                // cells[0] = timestamp, cells[1] = name, cells[2+] = answers
+                // cells[0] = timestamp, cells[1+] = answers (no nome column)
+                // skip the header row that gviz includes
+                if (cells[0] && String(cells[0].v) === 'Timestamp') continue;
                 const guestAnswers = [];
-                for (let i = 2; i < cells.length; i++) {
+                for (let i = 1; i < cells.length; i++) {
                     guestAnswers.push(cells[i] && cells[i].v ? String(cells[i].v).trim() : '');
                 }
                 if (guestAnswers.some(a => a !== '')) {
